@@ -1,0 +1,49 @@
+{
+  "name": "BCMS Dev",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "db",
+  "workspaceFolder": "/workspaces/color-flow",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  "forwardPorts": [4000, 5173, 5432],
+  "portsAttributes": {
+    "4000": { "label": "Go API" },
+    "5173": { "label": "Vite 前端" },
+    "5432": { "label": "PostgreSQL" }
+  },
+
+  "postCreateCommand": "cp -n .env.example .env || true",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "Vue.volar",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "github.copilot"
+      ],
+      "settings": {
+        "go.toolsManagement.autoUpdate": true,
+        "editor.formatOnSave": true,
+        "[go]": { "editor.defaultFormatter": "golang.go" },
+        "[vue]": { "editor.defaultFormatter": "Vue.volar" },
+        "sqltools.connections": [
+          {
+            "name": "BCMS Dev",
+            "driver": "PostgreSQL",
+            "server": "db",
+            "port": 5432,
+            "database": "bcms",
+            "username": "bcms",
+            "password": "bcms_dev"
+          }
+        ]
+      }
+    }
+  }
+}
