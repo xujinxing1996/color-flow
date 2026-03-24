@@ -4,7 +4,7 @@
 
 确保已安装：
 - Docker（包含 docker-compose）
-- Go 1.25+
+- Go 1.24
 - Node.js 24+
 - golang-migrate CLI
 

@@ -12,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -20,9 +21,53 @@ services:
     networks:
       - bcms-network
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: bcms-api
+    environment:
+      DATABASE_URL: postgresql://bcms:bcms_dev@db:5432/bcms?sslmode=disable
+      PORT: 4000
+      ENV: development
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-development}
+      UPLOADS_DIR: /app/uploads
+      QWEN_API_KEY: ${QWEN_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    ports:
+      - "4000:4000"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bcms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/v1/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.web
+    container_name: bcms-web
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - bcms-network
+    restart: unless-stopped
+
 networks:
   bcms-network:
     driver: bridge
 
 volumes:
   postgres_data:
+  uploads_data:

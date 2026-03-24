@@ -1,0 +1,42 @@
+# ---- Build stage ----
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:$PATH
+
+RUN apk add --no-cache git
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+# 编译 golang-migrate CLI
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+# 验证 migrate 编译成功
+RUN ls -la /go/bin/migrate
+
+# 拷贝源码并编译 API
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/api
+
+# ---- Runtime stage ----
+FROM alpine:3.20
+
+WORKDIR /app
+
+RUN apk add --no-cache wget ca-certificates tzdata bash postgresql-client
+
+COPY --from=builder /api ./api
+COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
+COPY --from=builder /app/db/migrations ./db/migrations
+
+RUN mkdir -p /app/uploads/pdfs
+
+COPY docker-entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+EXPOSE 4000
+
+ENTRYPOINT ["./entrypoint.sh"]

@@ -1,6 +1,6 @@
 module github.com/xujinxing1996/bcms
 
-go 1.25
+go 1.24
 
 require (
 	github.com/jackc/pgx/v5 v5.6.0
